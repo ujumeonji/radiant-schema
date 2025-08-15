@@ -1,5 +1,21 @@
+enum ProfessionalField {
+  BACKEND
+  FRONTEND
+  AI_ML
+}
+
 type User {
   id: ID!
   username: String!
   name: String!
+  avatar: String
+  followersCount: Int!
+  followingCount: Int!
+  fields: [ProfessionalField!]!
+  followers: [User!]!
+  following: [User!]!
+}
+
+extend type Query {
+  recommendedAuthors(limit: Int = 5): [User!]!
 }
