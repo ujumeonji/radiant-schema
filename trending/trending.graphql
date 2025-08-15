@@ -1,3 +1,11 @@
+type Topic {
+  id: ID!
+  name: String!
+  slug: String!
+  postCount: Int!
+}
+
 extend type Query {
   trendingPosts(limit: Int = 10): [Post!]!
+  popularTopics(limit: Int = 5): [Topic!]!
 }
