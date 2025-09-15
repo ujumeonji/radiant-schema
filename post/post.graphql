@@ -8,6 +8,7 @@ type Post {
   commentsCount: Int!
   thumbnailUrl: String
   author: User
+  participants(limit: Int = 10): [User!]!
 }
 
 type Query {
