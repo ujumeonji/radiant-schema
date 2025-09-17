@@ -1,29 +1,268 @@
+"""
+사용자가 전문화할 수 있는 직업 분야
+"""
 enum ProfessionalField {
+  """
+  백엔드 개발
+  """
   BACKEND
+
+  """
+  프론트엔드 개발
+  """
   FRONTEND
+
+  """
+  인공지능 및 기계학습
+  """
   AI_ML
+
+  """
+  모바일 개발
+  """
+  MOBILE
+
+  """
+  데브옵스 및 인프라
+  """
+  DEVOPS
+
+  """
+  데이터 사이언스
+  """
+  DATA_SCIENCE
 }
 
-type User {
+"""
+콘텐츠를 생성하거나 번역할 수 있는 커뮤니티 구성원을 나타내는 사용자
+"""
+type User implements Node {
+  """
+  사용자의 전역 고유 ID
+  """
   id: ID!
+
+  """
+  사용자의 고유한 사용자명
+  """
   username: String!
+
+  """
+  사용자의 표시 이름
+  """
   name: String!
-  avatar: String
+
+  """
+  사용자의 아바타 이미지 URL
+  """
+  avatarUrl: String
+
+  """
+  사용자의 자기소개 또는 설명
+  """
+  bio: String
+
+  """
+  사용자의 위치
+  """
+  location: String
+
+  """
+  사용자의 웹사이트 URL
+  """
+  websiteUrl: String
+
+  """
+  사용자가 플랫폼에 가입한 시간
+  """
+  joinedAt: DateTime!
+
+  """
+  이 사용자가 기여한 포스트 수
+  """
+  postsCount: Int!
+
+  """
+  모든 사용자의 콘텐츠에 대한 총 조회수
+  """
+  viewsCount: Int!
+
+  """
+  이 사용자를 팔로우하는 사용자 수
+  """
+  followersCount: Int!
+
+  """
+  이 사용자가 팔로우하는 사용자 수
+  """
+  followingCount: Int!
+
+  """
+  이 사용자가 전문화한 직업 분야
+  """
+  professionalFields: [ProfessionalField!]!
+
+  """
+  이 사용자를 팔로우하는 사용자들
+  """
+  followers(first: Int, after: String, last: Int, before: String): UserConnection!
+
+  """
+  이 사용자가 팔로우하는 사용자들
+  """
+  following(first: Int, after: String, last: Int, before: String): UserConnection!
+
+  """
+  이 사용자가 기여한 포스트들
+  """
+  posts(first: Int, after: String, last: Int, before: String): PostConnection!
+}
+
+"""
+A connection to a list of users
+"""
+type UserConnection {
+  """
+  Information to aid in pagination
+  """
+  pageInfo: PageInfo!
+
+  """
+  A list of edges
+  """
+  edges: [UserEdge!]!
+
+  """
+  Total count of users available
+  """
+  totalCount: Int!
+}
+
+"""
+An edge in a user connection
+"""
+type UserEdge {
+  """
+  The item at the end of the edge
+  """
+  node: User!
+
+  """
+  A cursor for use in pagination
+  """
+  cursor: String!
+}
+
+# User-specific input types
+"""
+Input for updating user profile
+"""
+input UpdateUserProfileInput {
+  name: String
   bio: String
   location: String
-  website: String
-  joinedDate: DateTime!
-  postsCount: Int!
-  viewsCount: Int!
-  followersCount: Int!
-  followingCount: Int!
-  fields: [ProfessionalField!]!
-  followers: [User!]!
-  following: [User!]!
+  websiteUrl: String
+  professionalFields: [ProfessionalField!]
 }
 
+# User-specific response types
+"""
+Successful profile update response
+"""
+type UpdateProfileSuccess implements MutationResponse {
+  status: ResponseStatus!
+  message: String
+  user: User!
+}
+
+"""
+Successful follow/unfollow response
+"""
+type FollowSuccess implements MutationResponse {
+  status: ResponseStatus!
+  message: String
+  user: User!
+  isFollowing: Boolean!
+}
+
+# User-specific error types
+type UserNotFoundError implements Error {
+  message: String!
+  code: String!
+  username: String!
+}
+
+type UserValidationError implements Error {
+  message: String!
+  code: String!
+  field: String!
+  value: String
+}
+
+type AlreadyFollowingError implements Error {
+  message: String!
+  code: String!
+  username: String!
+}
+
+type NotFollowingError implements Error {
+  message: String!
+  code: String!
+  username: String!
+}
+
+# Union types for user operations
+union UpdateProfileResponse =
+  UpdateProfileSuccess
+  | UserValidationError
+  | UnauthorizedError
+
+union FollowUserResponse =
+  FollowSuccess
+  | UserNotFoundError
+  | AlreadyFollowingError
+  | UnauthorizedError
+
+union UnfollowUserResponse =
+  FollowSuccess
+  | UserNotFoundError
+  | NotFollowingError
+  | UnauthorizedError
+
+union UserResult =
+  User
+  | UserNotFoundError
+
 extend type Query {
-  recommendedAuthors(limit: Int = 5): [User!]!
-  user(username: String!): User
-  userPosts(username: String!, first: Int, after: String): PostConnection!
+  """
+  Get recommended authors for the current user
+  """
+  recommendedAuthors(first: Int = 5, after: String): UserConnection!
+
+  """
+  Get a specific user by username
+  """
+  user(username: String!): UserResult!
+
+  """
+  Get posts by a specific user
+  """
+  userPosts(username: String!, first: Int, after: String, last: Int, before: String): PostConnection!
+}
+
+extend type Mutation {
+  """
+  Update user profile information
+  """
+  updateProfile(input: UpdateUserProfileInput!): UpdateProfileResponse!
+
+  """
+  Follow a user
+  """
+  followUser(username: String!): FollowUserResponse!
+
+  """
+  Unfollow a user
+  """
+  unfollowUser(username: String!): UnfollowUserResponse!
 }

@@ -1,11 +1,86 @@
-type Topic {
+"""
+A topic represents a category or tag for organizing content
+"""
+type Topic implements Node {
+  """
+  The globally unique ID of the topic
+  """
   id: ID!
+
+  """
+  The display name of the topic
+  """
   name: String!
+
+  """
+  URL-friendly version of the topic name
+  """
   slug: String!
-  postCount: Int!
+
+  """
+  Number of posts associated with this topic
+  """
+  postsCount: Int!
+
+  """
+  Posts associated with this topic
+  """
+  posts(first: Int, after: String, last: Int, before: String): PostConnection!
+}
+
+"""
+A connection to a list of topics
+"""
+type TopicConnection {
+  """
+  Information to aid in pagination
+  """
+  pageInfo: PageInfo!
+
+  """
+  A list of edges
+  """
+  edges: [TopicEdge!]!
+
+  """
+  Total count of topics available
+  """
+  totalCount: Int!
+}
+
+"""
+An edge in a topic connection
+"""
+type TopicEdge {
+  """
+  The item at the end of the edge
+  """
+  node: Topic!
+
+  """
+  A cursor for use in pagination
+  """
+  cursor: String!
 }
 
 extend type Query {
-  trendingPosts(limit: Int = 10): [Post!]!
-  popularTopics(limit: Int = 5): [Topic!]!
+  """
+  Get trending posts based on recent activity
+  """
+  trendingPosts(first: Int = 10, after: String): PostConnection!
+
+  """
+  Get popular topics with the most posts
+  """
+  popularTopics(first: Int = 5, after: String): TopicConnection!
+
+  """
+  Get a specific topic by slug
+  """
+  topic(slug: String!): Topic
+
+  """
+  Search topics by name
+  """
+  searchTopics(query: String!, first: Int, after: String): TopicConnection!
 }

@@ -1,0 +1,85 @@
+# Relay용 Node 인터페이스
+interface Node {
+  """
+  객체의 전역 고유 ID
+  """
+  id: ID!
+}
+
+# 기본 스칼라 타입
+scalar DateTime
+
+# 뮤테이션 응답용 상태 열거형
+enum ResponseStatus {
+  SUCCESS
+  ERROR
+}
+
+# 모든 뮤테이션 응답의 기본 인터페이스
+interface MutationResponse {
+  """
+  뮤테이션의 상태
+  """
+  status: ResponseStatus!
+
+  """
+  UI용 사용자 친화적 메시지
+  """
+  message: String
+}
+
+# 모든 에러 타입의 기본 인터페이스
+interface Error {
+  """
+  사용자 친화적 에러 메시지
+  """
+  message: String!
+
+  """
+  기계 판독 가능한 에러 코드
+  """
+  code: String!
+}
+
+# 공통 에러 타입들
+type ValidationError implements Error {
+  message: String!
+  code: String!
+  field: String!
+  value: String
+}
+
+type NotFoundError implements Error {
+  message: String!
+  code: String!
+  resourceType: String!
+  resourceId: String!
+}
+
+type UnauthorizedError implements Error {
+  message: String!
+  code: String!
+  requiredPermission: String
+}
+
+type ForbiddenError implements Error {
+  message: String!
+  code: String!
+  reason: String
+}
+
+# 기본 Query 타입
+type Query {
+  """
+  전역 고유 ID로 객체를 가져옵니다
+  """
+  node(id: ID!): Node
+}
+
+# 기본 Mutation 타입
+type Mutation {
+  """
+  플레이스홀더 필드 - 뮤테이션은 다른 스키마 파일에서 확장됩니다
+  """
+  _empty: String
+}

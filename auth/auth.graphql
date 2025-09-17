@@ -1,0 +1,114 @@
+# 인증 및 인가 스키마
+
+"""
+로그인을 위한 인증 입력
+"""
+input LoginInput {
+  email: String!
+  password: String!
+  rememberMe: Boolean = false
+}
+
+"""
+새 계정 생성을 위한 회원가입 입력
+"""
+input RegisterInput {
+  email: String!
+  password: String!
+  name: String!
+  username: String!
+}
+
+"""
+로그인 성공 응답
+"""
+type LoginSuccess implements MutationResponse {
+  status: ResponseStatus!
+  message: String
+  user: User!
+  accessToken: String!
+  refreshToken: String!
+}
+
+"""
+회원가입 성공 응답
+"""
+type RegisterSuccess implements MutationResponse {
+  status: ResponseStatus!
+  message: String
+  user: User!
+  accessToken: String!
+  refreshToken: String!
+}
+
+"""
+로그인 전용 에러 타입들
+"""
+type InvalidCredentialsError implements Error {
+  message: String!
+  code: String!
+  email: String!
+}
+
+type AccountLockedError implements Error {
+  message: String!
+  code: String!
+  lockoutDuration: Int!
+}
+
+"""
+회원가입 전용 에러 타입들
+"""
+type EmailAlreadyExistsError implements Error {
+  message: String!
+  code: String!
+  email: String!
+}
+
+type UsernameAlreadyExistsError implements Error {
+  message: String!
+  code: String!
+  username: String!
+}
+
+"""
+응답을 위한 유니온 타입들
+"""
+union LoginResponse =
+  LoginSuccess
+  | InvalidCredentialsError
+  | AccountLockedError
+  | ValidationError
+
+union RegisterResponse =
+  RegisterSuccess
+  | EmailAlreadyExistsError
+  | UsernameAlreadyExistsError
+  | ValidationError
+
+"""
+로그아웃 응답
+"""
+type LogoutSuccess implements MutationResponse {
+  status: ResponseStatus!
+  message: String
+}
+
+union LogoutResponse = LogoutSuccess
+
+extend type Mutation {
+  """
+  이메일과 비밀번호로 사용자 인증
+  """
+  login(input: LoginInput!): LoginResponse!
+
+  """
+  새 사용자 계정 등록
+  """
+  register(input: RegisterInput!): RegisterResponse!
+
+  """
+  현재 사용자 로그아웃
+  """
+  logout: LogoutResponse!
+}
