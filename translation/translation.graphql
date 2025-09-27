@@ -1,0 +1,174 @@
+# 번역 기능 GraphQL 스키마
+
+"""
+번역을 위한 입력 값
+"""
+input TranslationInput {
+  """
+  번역할 원본 텍스트 (최대 20,000자)
+  """
+  sourceText: String!
+
+  """
+  선택적으로 제공되는 원본 언어 코드
+  """
+  sourceLanguage: LanguageCode
+
+  """
+  번역 동작을 제어하는 옵션
+  """
+  options: TranslationOptions
+}
+
+"""
+번역 옵션
+"""
+input TranslationOptions {
+  """
+  원문 포맷팅을 가능한 한 유지할지 여부
+  """
+  preserveFormatting: Boolean = true
+}
+
+"""
+번역 요청 결과
+"""
+type TranslationResult {
+  """
+  추적을 위한 고유 세션 식별자
+  """
+  sessionId: ID!
+
+  """
+  감지되거나 지정된 원본 언어 정보
+  """
+  sourceLanguage: Language!
+
+  """
+  문장 단위의 원문/번역 페어 목록
+  """
+  sentencePairs: [SentencePair!]!
+
+  """
+  전체 번역된 텍스트
+  """
+  translatedText: String!
+
+  """
+  번역 처리 메타데이터
+  """
+  metadata: TranslationMetadata!
+}
+
+"""
+비동기 번역 요청이 접수된 경우 반환되는 타입
+"""
+type TranslationQueued {
+  sessionId: ID!
+  status: TranslationStatus!
+}
+
+"""
+언어 정보
+"""
+type Language {
+  code: LanguageCode!
+  name: String!
+  confidence: Float
+}
+
+"""
+문장 단위 번역 결과
+"""
+type SentencePair {
+  order: Int!
+  original: String!
+  translated: String!
+}
+
+"""
+번역 처리 중 수집된 메타데이터
+"""
+type TranslationMetadata {
+  processingTimeMs: Int!
+  tokenCount: Int!
+  chunkCount: Int!
+}
+
+"""
+번역 세션 조회용 타입
+"""
+type TranslationSession {
+  id: ID!
+  userId: ID!
+  sourceLanguage: Language!
+  textLength: Int!
+  status: TranslationStatus!
+  createdAt: DateTime!
+  completedAt: DateTime
+}
+
+"""
+번역 오류 타입
+"""
+type TranslationError implements Error {
+  type: TranslationErrorType!
+  message: String!
+  code: String!
+  sessionId: ID
+}
+
+"""
+번역 응답 유니온
+"""
+union TranslationResponse = TranslationQueued | TranslationError
+
+"""
+지원하는 언어 코드
+"""
+enum LanguageCode {
+  EN
+  JA
+  ZH
+  KO
+}
+
+"""
+번역 상태
+"""
+enum TranslationStatus {
+  CREATED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+"""
+번역 오류 분류
+"""
+enum TranslationErrorType {
+  SERVICE_UNAVAILABLE
+  INVALID_INPUT
+  TIMEOUT
+  RATE_LIMITED
+  UNAUTHORIZED
+  TEXT_TOO_LONG
+  THREAD_POOL_EXHAUSTED
+  UNKNOWN_ERROR
+}
+
+extend type Mutation {
+  """
+  영어, 일본어, 중국어 텍스트를 한국어로 번역합니다.
+  외부 처리 요청을 발행하고 즉시 번역 세션 ID를 반환합니다.
+  관리자 권한이 필요하며 비동기 처리를 사용합니다.
+  """
+  translateToKorean(input: TranslationInput!): TranslationResponse!
+}
+
+extend type Query {
+  """
+  감사 목적으로 번역 세션을 조회합니다.
+  """
+  translationSession(sessionId: ID!): TranslationSession
+}
